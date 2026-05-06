@@ -6,6 +6,17 @@ Built with LangGraph, Gemini, ChromaDB, and the official NUSMods v2 API.
 
 ---
 
+## Features
+
+- **Semantic course search** — ask in plain English and the agent searches across all 7,100+ NUS modules by meaning, not just keywords
+- **Department-aware filtering** — mention a faculty or school ("SoC", "business school", "FASS") and the agent resolves the exact department before searching
+- **Level filtering** — specify undergraduate, Master's, or PhD and the agent filters by course level automatically
+- **Multi-turn memory** — follow-up questions work naturally; the agent remembers what you asked earlier in the session
+- **Course tracking** — tell the agent which courses you've already taken and it won't recommend them again; add courses you're planning and it uses them for sequencing and prerequisite suggestions
+- **Prerequisite awareness** — when recommending courses from your planned list, the agent checks whether prerequisites are satisfied by your completed courses and flags any gaps
+
+---
+
 ## What it does
 
 Ask questions like:
