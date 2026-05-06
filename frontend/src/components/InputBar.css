@@ -1,0 +1,78 @@
+.input-bar {
+  display: flex;
+  gap: 12px;
+  padding: 16px 24px;
+  background: #FFFFFF;
+  border-top: 1px solid #E5E5E5;
+  width: calc(100% - 24px);
+  box-sizing: border-box;
+  margin: 0 12px;
+  overflow: hidden;
+}
+
+.input-bar textarea {
+  flex: 1;
+  padding: 12px 16px;
+  border: 1px solid #E5E5E5;
+  border-radius: 4px;
+  font-size: 14px;
+  font-family: inherit;
+  resize: none;
+  transition: all 0.2s ease;
+  background: #FFFFFF;
+  color: #333333;
+}
+
+.input-bar textarea::placeholder {
+  color: #CCCCCC;
+}
+
+.input-bar textarea:focus {
+  outline: none;
+  border-color: #FF4757;
+  box-shadow: 0 0 0 2px rgba(255, 71, 87, 0.1);
+}
+
+.input-bar textarea:disabled {
+  background: #F5F5F5;
+  color: #CCCCCC;
+  cursor: not-allowed;
+}
+
+.input-bar button {
+  padding: 10px 20px;
+  background: #FFFFFF;
+  color: #FF4757;
+  border: 2px solid #FF4757;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 600;
+  transition: all 0.2s ease;
+  align-self: flex-end;
+}
+
+.input-bar button:hover:not(:disabled) {
+  background: #FFF5F6;
+}
+
+.input-bar button:active:not(:disabled) {
+  background: #FFE9EC;
+}
+
+.input-bar button:disabled {
+  color: #CCCCCC;
+  border-color: #CCCCCC;
+  cursor: not-allowed;
+}
+
+@media (max-width: 768px) {
+  .input-bar {
+    flex-direction: column;
+    padding: 12px 20px;
+  }
+
+  .input-bar button {
+    align-self: flex-end;
+  }
+}

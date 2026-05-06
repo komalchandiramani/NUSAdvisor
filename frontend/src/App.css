@@ -1,0 +1,100 @@
+.app {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  background: #FFFFFF;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', sans-serif;
+  overflow: hidden;
+  width: 100vw;
+}
+
+.app-header {
+  background: #FFFFFF;
+  padding: 16px 24px;
+  border-bottom: 1px solid #E5E5E5;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.app-header h1 {
+  margin: 0;
+  font-size: 24px;
+  font-weight: 600;
+  color: #FF4757;
+  letter-spacing: -0.5px;
+  padding: 0;
+}
+
+.app-header p {
+  display: none;
+}
+
+.starter-prompts {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 48px 24px;
+  align-items: center;
+  width: 100%;
+}
+
+.starter-prompts h2 {
+  margin-bottom: 24px;
+  color: #333333;
+  font-size: 16px;
+  font-weight: 600;
+  letter-spacing: 0;
+  text-align: center;
+}
+
+.prompts-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 20px;
+  max-width: 700px;
+}
+
+.prompts-grid button {
+  padding: 28px 24px;
+  background: #FFFFFF;
+  border: 1px solid #E5E5E5;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-align: left;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.prompts-grid button:hover {
+  background: #FFFFFF;
+  border-color: #FF4757;
+  box-shadow: 0 4px 12px rgba(255, 71, 87, 0.15);
+  transform: translateY(-2px);
+}
+
+.prompts-grid button:active {
+  transform: translateY(0);
+}
+
+.card-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: #333333;
+}
+
+.card-subtitle {
+  font-size: 13px;
+  color: #FF4757;
+  font-weight: 500;
+}
+
+@media (max-width: 768px) {
+  .prompts-grid {
+    grid-template-columns: 1fr;
+  }
+}

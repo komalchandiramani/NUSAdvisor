@@ -1,0 +1,16 @@
+EVAL_QUESTIONS = [
+    {"question": "What machine learning courses does NUS offer?",       "expected_tools": ["search_modules_tool"]},
+    {"question": "Find introductory data structures courses",           "expected_tools": ["search_modules_tool"]},
+    {"question": "What computer vision modules are available?",         "expected_tools": ["search_modules_tool"]},
+    {"question": "I want to become a data scientist, what should I take?", "expected_tools": ["search_modules_tool"]},
+    {"question": "Show me NLP courses",                                 "expected_tools": ["search_modules_tool"]},
+    {"question": "What finance courses can I take at NUS?",             "expected_tools": ["search_modules_tool"]},
+    {"question": "I'm interested in cybersecurity modules",             "expected_tools": ["search_modules_tool"]},
+    {"question": "What courses cover software engineering practices?",  "expected_tools": ["search_modules_tool"]},
+    {"question": "Recommend courses for someone interested in AI research", "expected_tools": ["search_modules_tool"]},
+    {"question": "What statistics modules are offered by SoC?",         "expected_tools": ["find_departments_tool", "search_modules_tool"]},
+    {"question": "Which computing Master's courses are relevant for AI specialization?", "expected_tools": ["find_departments_tool", "search_modules_tool"]},
+    {"question": "Which computing undergard courses teach neural networks at an introductory level?", "expected_tools": ["find_departments_tool", "search_modules_tool"]},
+    {"question": "Which computing phd courses cover security", "expected_tools": ["find_departments_tool", "search_modules_tool"]},
+    {"question": "Suggest robotics courses for a Master's student in School of computing", "expected_tools": ["find_departments_tool", "search_modules_tool"]},    
+]
