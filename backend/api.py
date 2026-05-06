@@ -10,7 +10,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import List
 
-from search import search_modules, get_module_by_code
+from tools.search_modules import search_modules, get_module_by_code
 from chat import chat
 
 app = FastAPI(title="NUSAdvisor+")

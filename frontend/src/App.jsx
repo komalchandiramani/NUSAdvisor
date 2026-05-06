@@ -4,6 +4,7 @@ import InputBar from './components/InputBar'
 import './App.css'
 
 function App() {
+  const [sessionId] = useState(() => crypto.randomUUID())
   const [messages, setMessages] = useState([])
   const [loading, setLoading] = useState(false)
   const messagesEndRef = useRef(null)
@@ -32,7 +33,7 @@ function App() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           message: text,
-          history: messages
+          session_id: sessionId
         })
       })
 
