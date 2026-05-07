@@ -4,14 +4,29 @@ import InputBar from './components/InputBar'
 import './App.css'
 
 function App() {
-  const [sessionId] = useState(() => crypto.randomUUID())
+  const [sessionId] = useState(() => {
+    const stored = localStorage.getItem('nusadvisor_session_id')
+    if (stored) return stored
+    const id = crypto.randomUUID()
+    localStorage.setItem('nusadvisor_session_id', id)
+    return id
+  })
   const [messages, setMessages] = useState([])
   const [loading, setLoading] = useState(false)
+  const [historyLoaded, setHistoryLoaded] = useState(false)
   const messagesEndRef = useRef(null)
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }
+
+  useEffect(() => {
+    fetch(`/api/history?session_id=${sessionId}`)
+      .then(r => r.json())
+      .then(data => { if (data.messages?.length) setMessages(data.messages) })
+      .catch(() => {})
+      .finally(() => setHistoryLoaded(true))
+  }, [sessionId])
 
   useEffect(() => {
     scrollToBottom()
@@ -71,7 +86,7 @@ function App() {
 
       <ChatWindow messages={messages} messagesEndRef={messagesEndRef} />
 
-      {messages.length === 0 && (
+      {historyLoaded && messages.length === 0 && (
         <div className="starter-prompts">
           <h2>Get started with a question:</h2>
           <div className="prompts-grid">

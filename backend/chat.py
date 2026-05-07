@@ -1,5 +1,6 @@
 from langgraph.graph import StateGraph, END
-from langgraph.checkpoint.memory import MemorySaver
+from langgraph.checkpoint.sqlite import SqliteSaver
+import sqlite3
 from langchain_core.messages import SystemMessage, HumanMessage, ToolMessage
 from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_groq import ChatGroq
@@ -166,8 +167,8 @@ class NUSAdvisorAgent:
         graph.add_edge("action", "llm")
         graph.set_entry_point("llm")
 
-        checkpointer = MemorySaver()
-        self.graph = graph.compile(checkpointer=checkpointer)
+        conn = sqlite3.connect(os.getenv("CHECKPOINT_DB_PATH", "checkpoints.db"), check_same_thread=False)
+        self.graph = graph.compile(checkpointer=SqliteSaver(conn))
 
     def exists_action(self, state: AdvisorState):
         result = state["messages"][-1]
