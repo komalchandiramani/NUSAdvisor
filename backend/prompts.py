@@ -55,3 +55,11 @@ Text:
 """
 
 ### -------------------------------------------------------------------------------------
+
+TITLE_PROMPT = """Summarize the following message as a short chat title in 5 words or less.
+Return only the title, no punctuation or quotes.
+
+Message: {message}
+"""
+
+### -------------------------------------------------------------------------------------

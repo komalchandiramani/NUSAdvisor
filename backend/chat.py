@@ -1,28 +1,22 @@
 from langgraph.graph import StateGraph, END
-from langgraph.checkpoint.sqlite import SqliteSaver
-import sqlite3
+from langgraph.checkpoint.memory import MemorySaver
+from langgraph.checkpoint.sqlite.aio import AsyncSqliteSaver
 from langchain_core.messages import SystemMessage, HumanMessage, ToolMessage
 from langchain_google_genai import ChatGoogleGenerativeAI
-from langchain_groq import ChatGroq
 from langchain_core.tools import tool
-from typing import TypedDict, List, Annotated
+from typing import TypedDict, Annotated, Optional
 import operator
 import os
+import asyncio
+import aiosqlite
 from dotenv import load_dotenv
 from tools.search_modules import search_modules, get_module_by_code
 from tools.find_departments import find_departments
 from tools.course_state import _update_course_list
 import uuid
-from typing import Optional
 from prompts import SYS_PROMPT
 
 load_dotenv()
-
-
-GROQ_API_KEY = os.getenv("GROQ_API_KEY")
-if not GROQ_API_KEY:
-    raise ValueError("GROQ_API_KEY not found in .env file")
-
 
 
 @tool
@@ -42,7 +36,7 @@ def search_modules_tool(
                'cloud computing', 'full stack web development')
         departments: Filter by department names. Common values include:
                'Computer Science', 'Mathematics', 'Statistics and Data Science',
-               'Information Systems and Analytics', 'Industrial Systems 
+               'Information Systems and Analytics', 'Industrial Systems
                Engineering and Management', 'Electrical and Computer Engineering'.
                Pass None to search all departments.
         min_level: Minimum course level (1000, 2000, 3000, 4000, 5000, 6000).
@@ -57,7 +51,6 @@ def search_modules_tool(
         List of matching courses with code, title, department,
         credits, prerequisites, and relevance score.
     """
-     
     results = search_modules(
         query=query,
         departments=departments or [],
@@ -143,6 +136,7 @@ def update_courses_planned(course_codes: list[str], action: str = "add") -> str:
 
 tools = [search_modules_tool, get_module_tool, find_departments_tool, update_courses_taken, update_courses_planned]
 
+
 class AdvisorState(TypedDict):
     messages: Annotated[list, operator.add]
     courses_taken: list[str]
@@ -151,7 +145,7 @@ class AdvisorState(TypedDict):
 
 class NUSAdvisorAgent:
 
-    def __init__(self, model, tools, system=""):
+    def __init__(self, model, tools, system="", checkpointer=None):
         self.system = system
         self.tools = {t.name: t for t in tools}
         self.model = model.bind_tools(tools)
@@ -167,8 +161,7 @@ class NUSAdvisorAgent:
         graph.add_edge("action", "llm")
         graph.set_entry_point("llm")
 
-        conn = sqlite3.connect(os.getenv("CHECKPOINT_DB_PATH", "checkpoints.db"), check_same_thread=False)
-        self.graph = graph.compile(checkpointer=SqliteSaver(conn))
+        self.graph = graph.compile(checkpointer=checkpointer)
 
     def exists_action(self, state: AdvisorState):
         result = state["messages"][-1]
@@ -215,18 +208,19 @@ class NUSAdvisorAgent:
         return {"messages": results, "courses_taken": courses_taken, "courses_planned": courses_planned}
 
 
-
-# model = ChatGroq(
-#     model="llama-3.3-70b-versatile",
-#     groq_api_key=os.getenv("GROQ_API_KEY")
-# )
-
 model = ChatGoogleGenerativeAI(
     model=os.getenv("GEMINI_MODEL"),
     google_api_key=os.getenv("GEMINI_API_KEY")
 )
 
-abot = NUSAdvisorAgent(model, tools, system=SYS_PROMPT)
+# In-memory agent for evals — no async DB needed
+_eval_abot = NUSAdvisorAgent(model, tools, system=SYS_PROMPT, checkpointer=MemorySaver())
+
+
+async def create_agent() -> NUSAdvisorAgent:
+    """Create a production agent backed by AsyncSqliteSaver. Call once at startup."""
+    conn = await aiosqlite.connect(os.getenv("CHECKPOINT_DB_PATH", "checkpoints.db"))
+    return NUSAdvisorAgent(model, tools, system=SYS_PROMPT, checkpointer=AsyncSqliteSaver(conn))
 
 
 def _extract_text(content) -> str:
@@ -238,20 +232,32 @@ def _extract_text(content) -> str:
     return str(content)
 
 
-def chat_with_log(user_message: str) -> dict:
-    config = {"configurable": {"thread_id": str(uuid.uuid4())}}
-    messages = [HumanMessage(content=user_message)]
-    result = abot.graph.invoke({"messages": messages}, config=config)
+# ── Async functions used by the API ──────────────────────────────────────────
 
-    tool_calls = []
-    tool_responses = []
+async def achat(user_message: str, session_id: str, abot: NUSAdvisorAgent) -> str:
+    config = {"configurable": {"thread_id": session_id}}
+    result = await abot.graph.ainvoke(
+        {"messages": [HumanMessage(content=user_message)]},
+        config=config
+    )
+    return _extract_text(result["messages"][-1].content)
+
+
+# ── Sync functions used by evals ─────────────────────────────────────────────
+
+async def _async_chat_with_log(user_message: str) -> dict:
+    config = {"configurable": {"thread_id": str(uuid.uuid4())}}
+    result = await _eval_abot.graph.ainvoke(
+        {"messages": [HumanMessage(content=user_message)]},
+        config=config
+    )
+    tool_calls, tool_responses = [], []
     for msg in result["messages"]:
         if hasattr(msg, "tool_calls") and msg.tool_calls:
             for tc in msg.tool_calls:
                 tool_calls.append({"tool_name": tc["name"], "tool_args": tc["args"]})
         if isinstance(msg, ToolMessage):
             tool_responses.append({"tool_name": msg.name, "tool_response": msg.content})
-
     return {
         "final_output": _extract_text(result["messages"][-1].content),
         "tool_calls": tool_calls,
@@ -261,15 +267,14 @@ def chat_with_log(user_message: str) -> dict:
     }
 
 
-def chat_multi_turn(messages: list[str], session_id: str = None) -> dict:
+async def _async_chat_multi_turn(messages: list[str], session_id: str = None) -> dict:
     if session_id is None:
         session_id = str(uuid.uuid4())
     config = {"configurable": {"thread_id": session_id}}
     result = None
-    all_tool_calls = []
-    all_tool_responses = []
+    all_tool_calls, all_tool_responses = [], []
     for msg in messages:
-        result = abot.graph.invoke(
+        result = await _eval_abot.graph.ainvoke(
             {"messages": [HumanMessage(content=msg)]},
             config=config
         )
@@ -288,19 +293,22 @@ def chat_multi_turn(messages: list[str], session_id: str = None) -> dict:
     }
 
 
-def chat(user_message: str, session_id: str) -> str:
-    config = {"configurable": {"thread_id": session_id}}
-    result = abot.graph.invoke(
-        {"messages": [HumanMessage(content=user_message)]},
-        config=config
-    )
-    return _extract_text(result["messages"][-1].content)
+def chat_with_log(user_message: str) -> dict:
+    return asyncio.run(_async_chat_with_log(user_message))
+
+
+def chat_multi_turn(messages: list[str], session_id: str = None) -> dict:
+    return asyncio.run(_async_chat_multi_turn(messages, session_id))
 
 
 if __name__ == "__main__":
-    config = {"configurable": {"thread_id": "test"}}
-    result = abot.graph.invoke(
-        {"messages": [HumanMessage(content="What is an introductory machine learning course offered by school of computing?")]},
-        config=config
-    )
-    print(_extract_text(result["messages"][-1].content))
+    async def _test():
+        agent = await create_agent()
+        config = {"configurable": {"thread_id": "test"}}
+        result = await agent.graph.ainvoke(
+            {"messages": [HumanMessage(content="What is an introductory machine learning course offered by school of computing?")]},
+            config=config
+        )
+        print(_extract_text(result["messages"][-1].content))
+
+    asyncio.run(_test())

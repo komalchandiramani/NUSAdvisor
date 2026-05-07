@@ -1,4 +1,6 @@
 from tools.db import modules_collection, model
+from functools import lru_cache
+
 
 def search_modules(query: str, departments: list[str] = None, min_level: int = None, n_results: int = 5) -> list[dict]:
     embedded_query = model.encode(query).tolist()
@@ -31,6 +33,7 @@ def search_modules(query: str, departments: list[str] = None, min_level: int = N
     return results
 
 
+@lru_cache(maxsize=512)
 def get_module_by_code(code: str) -> dict | None:
     module = modules_collection.get(ids=[code], include=["metadatas"])
     if module and module["metadatas"]:

@@ -1,30 +1,34 @@
-"""
-NUSAdvisor+ FastAPI backend.
-
-Usage:
-    uvicorn main:app --reload
-"""
-
+from contextlib import asynccontextmanager
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
-from typing import List
+import json
 
 from tools.search_modules import search_modules, get_module_by_code
-from langchain_core.messages import HumanMessage, AIMessage
-from chat import chat, abot, _extract_text
+from langchain_core.messages import HumanMessage, AIMessage, AIMessageChunk
+from chat import create_agent, achat, _extract_text, NUSAdvisorAgent, model
+from prompts import TITLE_PROMPT
 
-app = FastAPI(title="NUSAdvisor+")
+abot: NUSAdvisorAgent = None
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    global abot
+    abot = await create_agent()
+    yield
+
+
+app = FastAPI(title="NUSAdvisor+", lifespan=lifespan)
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173"],  # Vite dev server
+    allow_origins=["http://localhost:5173"],
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-
-# ── Request / Response models ─────────────────────────────
 
 class SearchRequest(BaseModel):
     query: str
@@ -34,25 +38,22 @@ class SearchRequest(BaseModel):
 class ChatRequest(BaseModel):
     message: str
     session_id: str
+    is_first_message: bool = False
 
-
-# ── Routes ───────────────────────────────────────────────
 
 @app.get("/health")
-def health():
+async def health():
     return {"status": "ok"}
 
 
 @app.post("/search")
-def search(req: SearchRequest):
-    """Semantic search over all NUS modules."""
+async def search(req: SearchRequest):
     results = search_modules(req.query, req.n_results)
     return {"results": results}
 
 
 @app.get("/modules/{code}")
-def get_module(code: str):
-    """Look up a single module by code (e.g. CS1101S)."""
+async def get_module(code: str):
     module = get_module_by_code(code.upper())
     if not module:
         raise HTTPException(status_code=404, detail=f"Module {code} not found")
@@ -60,10 +61,9 @@ def get_module(code: str):
 
 
 @app.get("/history")
-def history_endpoint(session_id: str):
-    """Return prior messages for a session so the frontend can restore chat history."""
+async def history_endpoint(session_id: str):
     config = {"configurable": {"thread_id": session_id}}
-    state = abot.graph.get_state(config)
+    state = await abot.graph.aget_state(config)
     messages = []
     for msg in state.values.get("messages", []):
         if isinstance(msg, HumanMessage):
@@ -74,7 +74,35 @@ def history_endpoint(session_id: str):
 
 
 @app.post("/chat")
-def chat_endpoint(req: ChatRequest):
-    """Chat with the NUSAdvisor+ LangGraph agent."""
-    response = chat(req.message, req.session_id)
+async def chat_endpoint(req: ChatRequest):
+    response = await achat(req.message, req.session_id, abot)
     return {"response": response}
+
+
+async def generate_title(message: str) -> str:
+    try:
+        result = await model.ainvoke([HumanMessage(content=TITLE_PROMPT.format(message=message))])
+        return _extract_text(result.content).strip()
+    except Exception:
+        return message[:40]
+
+
+@app.post("/chat/stream")
+async def chat_stream_endpoint(req: ChatRequest):
+    async def generate():
+        config = {"configurable": {"thread_id": req.session_id}}
+        async for chunk, _ in abot.graph.astream(
+            {"messages": [HumanMessage(content=req.message)]},
+            config,
+            stream_mode="messages"
+        ):
+            if isinstance(chunk, AIMessageChunk):
+                text = _extract_text(chunk.content)
+                if text:
+                    yield f"data: {json.dumps({'token': text})}\n\n"
+        if req.is_first_message:
+            title = await generate_title(req.message)
+            yield f"data: {json.dumps({'title': title})}\n\n"
+        yield "data: [DONE]\n\n"
+
+    return StreamingResponse(generate(), media_type="text/event-stream")
