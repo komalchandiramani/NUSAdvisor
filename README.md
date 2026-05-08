@@ -16,7 +16,6 @@ Ask about courses in plain English. The agent searches 7,100+ NUS modules semant
 - **Semantic course search** — searches 7,100+ NUS modules by meaning
 - **Faculty and level filtering** — mention "SoC", "business school", or "undergraduate" and the agent filters automatically
 - **Course state tracking** — tell the agent which courses you've taken or planned; it won't re-recommend them and uses them for prerequisite reasoning
-- **Prerequisite awareness** — flags unmet prerequisites and suggests a sensible course order based on your completed courses
 - **Multi-turn memory** — follow-up questions work naturally without repeating context
 - **Streaming responses** — answers appear token-by-token as the model generates them
 - **Persistent sessions** — conversations survive page refreshes; pick up where you left off
@@ -26,7 +25,7 @@ Ask about courses in plain English. The agent searches 7,100+ NUS modules semant
 
 ## Architecture
 
-### Agent (LangGraph router-tool loop)
+### Agent
 
 ```
           ┌─────────────────────────────────┐
