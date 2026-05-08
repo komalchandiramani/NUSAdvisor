@@ -6,11 +6,6 @@ Ask about courses in plain English. The agent searches 7,100+ NUS modules semant
 
 ---
 
-## Demo
-
-
----
-
 ## Features
 
 - **Semantic course search** — searches 7,100+ NUS modules by meaning
