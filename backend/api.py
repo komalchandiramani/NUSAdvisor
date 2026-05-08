@@ -1,5 +1,5 @@
 from contextlib import asynccontextmanager
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, APIRouter
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
@@ -29,6 +29,8 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+router = APIRouter(prefix="/api")
+
 
 class SearchRequest(BaseModel):
     query: str
@@ -41,18 +43,18 @@ class ChatRequest(BaseModel):
     is_first_message: bool = False
 
 
-@app.get("/health")
+@router.get("/health")
 async def health():
     return {"status": "ok"}
 
 
-@app.post("/search")
+@router.post("/search")
 async def search(req: SearchRequest):
     results = search_modules(req.query, req.n_results)
     return {"results": results}
 
 
-@app.get("/modules/{code}")
+@router.get("/modules/{code}")
 async def get_module(code: str):
     module = get_module_by_code(code.upper())
     if not module:
@@ -60,7 +62,7 @@ async def get_module(code: str):
     return module
 
 
-@app.get("/history")
+@router.get("/history")
 async def history_endpoint(session_id: str):
     config = {"configurable": {"thread_id": session_id}}
     state = await abot.graph.aget_state(config)
@@ -73,7 +75,7 @@ async def history_endpoint(session_id: str):
     return {"messages": messages}
 
 
-@app.post("/chat")
+@router.post("/chat")
 async def chat_endpoint(req: ChatRequest):
     response = await achat(req.message, req.session_id, abot)
     return {"response": response}
@@ -87,7 +89,7 @@ async def generate_title(message: str) -> str:
         return message[:40]
 
 
-@app.post("/chat/stream")
+@router.post("/chat/stream")
 async def chat_stream_endpoint(req: ChatRequest):
     async def generate():
         config = {"configurable": {"thread_id": req.session_id}}
@@ -106,3 +108,6 @@ async def chat_stream_endpoint(req: ChatRequest):
         yield "data: [DONE]\n\n"
 
     return StreamingResponse(generate(), media_type="text/event-stream")
+
+
+app.include_router(router)
