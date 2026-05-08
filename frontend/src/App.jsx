@@ -102,7 +102,8 @@ function App() {
           if (!line.startsWith('data: ')) continue
           const raw = line.slice(6)
           if (raw === '[DONE]') break
-          const data = JSON.parse(raw)
+          let data
+          try { data = JSON.parse(raw) } catch { continue }
           if (data.title) {
             setSessions(prev => {
               const updated = prev.map(s => s.id === sessionId ? { ...s, title: data.title } : s)

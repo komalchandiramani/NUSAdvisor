@@ -102,12 +102,15 @@ async def chat_stream_endpoint(req: ChatRequest):
                 text = _extract_text(chunk.content)
                 if text:
                     yield f"data: {json.dumps({'token': text})}\n\n"
+            else:
+                yield ": ping\n\n"
         if req.is_first_message:
             title = await generate_title(req.message)
             yield f"data: {json.dumps({'title': title})}\n\n"
         yield "data: [DONE]\n\n"
 
-    return StreamingResponse(generate(), media_type="text/event-stream")
+    return StreamingResponse(generate(), media_type="text/event-stream",
+                             headers={"X-Accel-Buffering": "no", "Cache-Control": "no-cache"})
 
 
 app.include_router(router)

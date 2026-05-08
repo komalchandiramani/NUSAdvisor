@@ -37,6 +37,9 @@ env/
 # AWS key pairs
 *.pem
 
+# AWS CLI installer
+*.pkg
+
 # IDE
 .vscode/
 .idea/

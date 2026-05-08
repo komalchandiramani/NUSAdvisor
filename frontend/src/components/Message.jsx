@@ -1,4 +1,5 @@
 import ReactMarkdown from 'react-markdown'
+import remarkGfm from 'remark-gfm'
 import './Message.css'
 
 export default function Message({ message }) {
@@ -16,7 +17,7 @@ export default function Message({ message }) {
         ) : isThinking ? (
           <span className="thinking-dots">Thinking<span></span><span></span><span></span></span>
         ) : (
-          <ReactMarkdown>{message.content}</ReactMarkdown>
+          <ReactMarkdown remarkPlugins={[remarkGfm]}>{message.content}</ReactMarkdown>
         )}
       </div>
     </div>
