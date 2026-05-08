@@ -18,6 +18,15 @@ Ask about courses in plain English. The agent searches 7,100+ NUS modules semant
 
 ---
 
+## Demo
+
+
+
+https://github.com/user-attachments/assets/f03228a0-63ab-4ccd-abba-74c2018188d3
+
+
+---
+
 ## Architecture
 
 ### Agent
