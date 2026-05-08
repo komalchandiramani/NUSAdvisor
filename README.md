@@ -40,8 +40,6 @@ Ask about courses in plain English. The agent searches 7,100+ NUS modules semant
          END    find_departments_tool  search_modules_tool  get_module_tool
                 (ChromaDB: depts)     (ChromaDB: 7,126      (ChromaDB:
                                        modules)              exact match)
-                              update_courses_taken
-                              update_courses_planned
 ```
 
 ### Deployment
