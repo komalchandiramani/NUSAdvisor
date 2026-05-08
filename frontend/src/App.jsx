@@ -89,10 +89,9 @@ function App() {
 
       if (!response.ok) throw new Error('API error')
 
-      setMessages(prev => [...prev.filter(m => !m.isThinking), { role: 'assistant', content: '' }])
-
       const reader = response.body.getReader()
       const decoder = new TextDecoder()
+      let firstToken = true
 
       while (true) {
         const { done, value } = await reader.read()
@@ -111,11 +110,16 @@ function App() {
               return updated
             })
           } else if (data.token) {
-            setMessages(prev => {
-              const msgs = [...prev]
-              msgs[msgs.length - 1] = { ...msgs[msgs.length - 1], content: msgs[msgs.length - 1].content + data.token }
-              return msgs
-            })
+            if (firstToken) {
+              setMessages(prev => [...prev.filter(m => !m.isThinking), { role: 'assistant', content: data.token }])
+              firstToken = false
+            } else {
+              setMessages(prev => {
+                const msgs = [...prev]
+                msgs[msgs.length - 1] = { ...msgs[msgs.length - 1], content: msgs[msgs.length - 1].content + data.token }
+                return msgs
+              })
+            }
           }
         }
       }
