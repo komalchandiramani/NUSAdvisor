@@ -191,7 +191,7 @@ The agent was built using an evaluation-driven development approach — evals we
 | `tool_calling_eval` | Code | Compares expected vs actual tool call list |
 | `call_efficiency_eval` | Code | Checks for redundant `search_modules_tool` calls |
 | `course_exists_eval` | Hybrid | Uses LLM to extract course codes from the response, then verifies each against ChromaDB |
-| `search_relevance_eval` | LLM-as-judge | Calls Gemini with a relevance prompt to assess response quality |
+| `search_relevance_eval` | LLM-as-judge | Uses Gemini as a judge to assess relevance of response to user's query |
 | `courses_state_eval` | Code | Compares expected vs actual taken/planned course lists |
 
 ### Results (28 questions)
