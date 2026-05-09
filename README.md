@@ -40,10 +40,11 @@ https://github.com/user-attachments/assets/f03228a0-63ab-4ccd-abba-74c2018188d3
      │ (router)│                   │ (run tools)  │
      └─────────┘                   └──────────────┘
           │ no                            │
-          ▼               ┌──────────────┬┴─────────────────┐
-         END    find_departments_tool  search_modules_tool  get_module_tool
-                (ChromaDB: depts)     (ChromaDB: 7,126      (ChromaDB:
-                                       modules)              exact match)
+          ▼                            ├── find_departments_tool  (ChromaDB: departments)
+         END                           ├── search_modules_tool    (ChromaDB: 7,126 modules)
+                                       ├── get_module_tool        (ChromaDB: exact match)
+                                       ├── update_courses_taken   (agent state)
+                                       └── update_courses_planned (agent state)
 ```
 
 ### Deployment
