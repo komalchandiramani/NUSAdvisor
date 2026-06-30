@@ -69,18 +69,18 @@ def build_metadata(mod: dict) -> dict:
 
 
 
-# Combine moduleCode, title, description, prerequisites, workload into one string.
+# Build the text that gets EMBEDDED: title + description only.
+# Prerequisites and workload are deliberately excluded — they're logistics, not
+# topic. Including them diluted the semantic vector (a long prereq/workload tail
+# buried the title's exact-match signal, e.g. CS3244 "Machine Learning" fell to
+# cosine 0.38 vs the query) and consumed the model's token budget. Both fields
+# stay in metadata (build_metadata) for filtering/display — just not embedded.
 def build_document_text(mod: dict) -> str:
 
     parts = [
         f"{mod['moduleCode']}: {mod['title']}",
         mod.get("description") or "",
     ]
-
-    if mod.get("prerequisite"):
-        parts.append(f"Prerequisites:  {mod['prerequisite']}")
-    if mod.get("workload"):
-        parts.append(f"Workload: {mod.get('workload')}")
 
     return "\n".join(parts)
 
