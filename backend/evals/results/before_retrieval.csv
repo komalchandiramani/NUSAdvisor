@@ -1,0 +1,19 @@
+group,query,ranks,recall@1,recall@3,recall@5,recall@10,hit@1,hit@3,hit@5,hit@10,precision@1,precision@3,precision@5,precision@10,reciprocal_rank
+realistic,machine learning,CS3244@8,0.0,0.0,0.0,1.0,0.0,0.0,0.0,1.0,0.0,0.0,0.0,0.1,0.125
+realistic,data structures and algorithms,CS2040@1; CS2040S@4; CS3230@6,0.3333,0.3333,0.6667,1.0,1.0,1.0,1.0,1.0,1.0,0.3333,0.4,0.3,1.0
+realistic,natural language processing,CS4248@3,0.0,1.0,1.0,1.0,0.0,1.0,1.0,1.0,0.0,0.3333,0.2,0.1,0.3333
+realistic,computer vision,CS4243@1,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,0.3333,0.2,0.1,1.0
+realistic,artificial intelligence,CS5446@-; CS3263@2,0.0,0.5,0.5,0.5,0.0,1.0,1.0,1.0,0.0,0.3333,0.2,0.1,0.5
+realistic,computer security,CS3235@3,0.0,1.0,1.0,1.0,0.0,1.0,1.0,1.0,0.0,0.3333,0.2,0.1,0.3333
+realistic,computer networks,CS4226@6; CS2105@3,0.0,0.5,0.5,1.0,0.0,1.0,1.0,1.0,0.0,0.3333,0.2,0.2,0.3333
+realistic,introductory programming,CS2030@9; CS2030S@10; CS1101S@6,0.0,0.0,0.0,1.0,0.0,0.0,0.0,1.0,0.0,0.0,0.0,0.3,0.1667
+realistic,bioinformatics,CS4220@1,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,0.3333,0.2,0.1,1.0
+realistic,design and analysis of algorithms,CS3230@1,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,0.3333,0.2,0.1,1.0
+realistic,probability and statistics,ST2334@1,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,0.3333,0.2,0.1,1.0
+realistic,introduction to data science,DSA1101@3,0.0,1.0,1.0,1.0,0.0,1.0,1.0,1.0,0.0,0.3333,0.2,0.1,0.3333
+realistic,data analytics for business,BT4222@-; IT5006@3,0.0,0.5,0.5,0.5,0.0,1.0,1.0,1.0,0.0,0.3333,0.2,0.1,0.3333
+realistic,quantitative methods for economics,EC2104@1,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,0.3333,0.2,0.1,1.0
+realistic,machine learning,EE2213@9; EE2211@3,0.0,0.5,0.5,1.0,0.0,1.0,1.0,1.0,0.0,0.3333,0.2,0.2,0.3333
+hard-probe,machine learning,CS3244@-,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0
+hard-probe,natural language processing,CS4248@-,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0
+hard-probe,introductory programming,CS2030@-; CS2030S@-; CS1101S@-,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0
