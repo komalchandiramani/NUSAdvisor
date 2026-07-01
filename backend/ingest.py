@@ -21,6 +21,9 @@ import re
 from config import (
     NUSMODS_BASE_URL,
     CHROMA_PERSIST_DIR,
+    DEPARTMENTS_COLLECTION,
+    MODULES_COLLECTION,
+    CHROMA_SPACE,
     EMBEDDING_MODEL,
     get_current_academic_year,
 )
@@ -91,12 +94,12 @@ def build_document_text(mod: dict) -> str:
 def init_chromadb():
     chroma_client = chromadb.PersistentClient(path=CHROMA_PERSIST_DIR)
     mods_collection = chroma_client.get_or_create_collection(
-        name="nus_modules", 
-        metadata={"hnsw:space": "cosine"}
+        name=MODULES_COLLECTION, 
+        metadata={"hnsw:space": CHROMA_SPACE}
     )
     dept_collection = chroma_client.get_or_create_collection(
-        name="nus_departments",
-        metadata={"hnsw:space": "cosine"}
+        name=DEPARTMENTS_COLLECTION,
+        metadata={"hnsw:space": CHROMA_SPACE}
     )
     
     return mods_collection, dept_collection
