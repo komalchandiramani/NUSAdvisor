@@ -65,7 +65,7 @@ async def get_module(code: str):
 @router.get("/history")
 async def history_endpoint(session_id: str):
     config = {"configurable": {"thread_id": session_id}}
-    state = await abot.graph.aget_state(config)
+    state = await abot.graph.aget_state(config) # reads the asyncsqliterserver state, no checkpointer => no state, we get an error
     messages = []
     for msg in state.values.get("messages", []):
         if isinstance(msg, HumanMessage):
@@ -75,12 +75,14 @@ async def history_endpoint(session_id: str):
     return {"messages": messages}
 
 
+### not streaming version, returns the whole response all at once
 @router.post("/chat")
 async def chat_endpoint(req: ChatRequest):
     response = await achat(req.message, req.session_id, abot)
     return {"response": response}
 
-
+### generate a title based on the message content
+### limit the title to 40 characters
 async def generate_title(message: str) -> str:
     try:
         result = await model.ainvoke([HumanMessage(content=TITLE_PROMPT.format(message=message))])
@@ -89,6 +91,9 @@ async def generate_title(message: str) -> str:
         return message[:40]
 
 
+### streaming version of chat endpoint, uses SSE - Server Sent Events
+### SSE - is a web standard ofr the server to push a stream of data to
+### the client over a single, long-lived HTTP connection
 @router.post("/chat/stream")
 async def chat_stream_endpoint(req: ChatRequest):
     async def generate():
@@ -103,7 +108,7 @@ async def chat_stream_endpoint(req: ChatRequest):
                 if text:
                     yield f"data: {json.dumps({'token': text})}\n\n"
             else:
-                yield ": ping\n\n"
+                yield ": ping\n\n"  ## in SSE, line starting with : is a comment, keeps the http connection alive during non-llm messages
         if req.is_first_message:
             title = await generate_title(req.message)
             yield f"data: {json.dumps({'title': title})}\n\n"
