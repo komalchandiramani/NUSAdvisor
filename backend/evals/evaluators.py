@@ -1,7 +1,7 @@
 import re
 import time
 from tools.search_modules import get_module_by_code
-from prompts import RELEVANCE_PROMPT, EXTRACT_CODES_PROMPT
+from prompts import RELEVANCE_PROMPT, EXTRACT_CODES_PROMPT, OUT_OF_SCOPE_PROMPT
 from google import genai
 from dotenv import load_dotenv
 import os
@@ -10,7 +10,9 @@ import ast
 load_dotenv()
 _client = genai.Client(api_key=os.getenv("GEMINI_API_KEY"))
 
+REFUSAL_MARKER = "out of my scope"
 
+### Code based: checks if tools are called in expected order.
 def tool_calling_eval(input, output) -> float:
     if output is None:
         return 0.0
@@ -31,6 +33,7 @@ def tool_calling_eval(input, output) -> float:
     return 1.0
 
 
+### Code based: checks if tools are called in efficient order.
 def call_efficiency_eval(output) -> float:
     if output is None:
         return 0.0
@@ -51,6 +54,16 @@ def call_efficiency_eval(output) -> float:
     return 1.0
 
 
+### Code based eval: checks if all course codes mentioned in an LLM response
+### exist in our db or not. 
+### 1. First we extract all course codes mentioned in a
+### tool response. These codes are considered to be real, but all of them may not
+### exist in the database since some courses may have been discontinued but they are
+### still mentioned as prerequisites in course descriptions.
+### 2. Then we use an LLM call to extract all the courses mentioned in the LLM response
+### If that doesn't work, the fallback is regex
+### From the codes extracted in step 2, we drop the ones that came from tool responses, and check 
+### the rest against the db — returning the fraction that exist
 def course_exists_eval(output) -> float:
     if output is None:
         return 0.0
@@ -60,9 +73,8 @@ def course_exists_eval(output) -> float:
         return 1.0
 
     # Codes that came verbatim from tool responses are real NUS codes — they may
-    # simply be missing from our DB (e.g. YSC*, R-suffix legacy codes, D/T variants).
-    # Exclude them so we only penalise codes the LLM independently invented.
-    # Use {0,2} suffix to also capture two-letter variants like CS2103DE.
+    # simply be missing from our DB. Exclude them so we only penalise codes the LLM 
+    # independently invented.
     tool_response_codes = set()
     for tr in output.get("tool_responses", []):
         tool_response_codes.update(re.findall(r'\b[A-Z]{2,4}\d{4}[A-Z]{0,3}\b', tr.get("tool_response", "")))
@@ -90,6 +102,7 @@ def course_exists_eval(output) -> float:
     return len(valid) / len(codes_to_check)
 
 
+### LLM as judge: checks if answer is relevant to user's query
 def search_relevance_eval(input, output) -> bool:
     if output is None:
         return False
@@ -108,6 +121,8 @@ def search_relevance_eval(input, output) -> bool:
     return label == "relevant"
 
 
+### Code based eval: checks if course state is updated correctly when user mentions
+### they have taken a course or plan to take one
 def courses_state_eval(input, output) -> float:
     if output is None:
         return 0.0
@@ -151,3 +166,12 @@ def gemini_judge(prompt: str, rails: list[str], retries: int = 3, backoff: float
             if attempt < retries - 1:
                 time.sleep(backoff * (attempt + 1))
     return rails[-1], f"ERROR: {last_err}"
+
+
+def stay_on_topic(input, output) -> bool:
+    if output is None:
+        return 0.0
+    final_output = (output.get("final_output") or "").lower()
+    expected = input.get("expected")
+    behaved = "refuse" if REFUSAL_MARKER in final_output else "answer"
+    return behaved == expected
