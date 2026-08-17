@@ -1,6 +1,6 @@
 # NUSAdvisor+
 
-A conversational AI academic advisor for NUS students — live at **https://d2k55gvobdiojf.cloudfront.net**
+A conversational AI academic advisor for NUS students.
 
 Ask about courses in plain English. The agent searches 7,100+ NUS modules semantically, filters by faculty and level, tracks your completed and planned courses, and holds multi-turn conversations so you can refine your search naturally.
 
